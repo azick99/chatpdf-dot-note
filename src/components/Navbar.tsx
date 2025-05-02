@@ -2,7 +2,6 @@ import Link from 'next/link'
 import MaxWidthWrapper from './MaxWidthWrapper'
 import { buttonVariants } from './ui/button'
 
-import { ArrowRight } from 'lucide-react'
 import { currentUser } from '@clerk/nextjs/server'
 import {
   SignedIn,
@@ -34,19 +33,27 @@ export default async function Navbar() {
                   Pricing
                 </Link>
                 <SignedOut>
-                  <SignInButton
-                    className={buttonVariants({
-                      variant: 'ghost',
-                      size: 'sm',
-                      className: 'cursor-pointer',
-                    })}
-                  />
-                  <SignUpButton
-                    className={buttonVariants({
-                      size: 'sm',
-                      className: 'cursor-pointer',
-                    })}
-                  />
+                  <SignInButton>
+                    <span
+                      className={buttonVariants({
+                        variant: 'ghost',
+                        size: 'sm',
+                        className: 'cursor-pointer',
+                      })}
+                    >
+                      Sign in
+                    </span>
+                  </SignInButton>
+                  <SignUpButton>
+                    <span
+                      className={buttonVariants({
+                        size: 'sm',
+                        className: 'cursor-pointer',
+                      })}
+                    >
+                      Sign up
+                    </span>
+                  </SignUpButton>
                 </SignedOut>
               </>
             ) : (

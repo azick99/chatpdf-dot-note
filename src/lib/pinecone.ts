@@ -4,6 +4,12 @@ import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
+import { pipeline } from 'stream'
+import { promisify } from 'util'
+import {
+  Document,
+  RecursiveCharacterTextSplitter,
+} from '@pinecone-database/doc-splitter'
 
 const pc = new Pinecone({
   apiKey: process.env.PINECONE_API_KEY!,
@@ -41,11 +47,12 @@ const s3Client = new S3Client({
   },
 })
 
+const streamPipeline = promisify(pipeline)
+
 export async function downloadFileFromS3(
   file_key: string
 ): Promise<string | null> {
   try {
-    console.log('Downloading file with key:', file_key)
     const bucketName = process.env.NEXT_PUBLIC_S3_BUCKET_NAME!
     const command = new GetObjectCommand({
       Bucket: bucketName,
@@ -53,8 +60,9 @@ export async function downloadFileFromS3(
     })
 
     const { Body } = await s3Client.send(command)
-    if (!Body) {
-      throw new Error('No data returned from S3')
+
+    if (!Body || typeof Body === 'string') {
+      throw new Error('Invalid data stream from S3')
     }
 
     const filePath = path.join(
@@ -62,11 +70,10 @@ export async function downloadFileFromS3(
       `s3-${Date.now()}-${file_key.split('/').pop()}`
     )
     const fileStream = fs.createWriteStream(filePath)
-    await new Promise((resolve, reject) => {
-      Body.pipe(fileStream).on('error', reject).on('close', resolve)
-    })
 
-    console.log('File downloaded to:', filePath)
+    // Use pipeline to safely write stream to file
+    await streamPipeline(Body as NodeJS.ReadableStream, fileStream)
+
     return filePath
   } catch (error) {
     console.error('Error downloading file from S3:', error)
@@ -74,27 +81,53 @@ export async function downloadFileFromS3(
   }
 }
 
+type PDFPage = {
+  pageContent: string
+  metadata: { loc: { pageNumber: number } }
+}
+
 export async function loadS3IntoPinecone(file_key: string) {
-  console.log('Downloading file from S3...')
   const file_name = await downloadFileFromS3(file_key)
   if (!file_name) {
     throw new Error('Failed to download file from S3')
   }
 
-  console.log('Loading PDF from:', file_name)
   try {
+    // 1. obtain the pdf -> download and read from pdf
     const loader = new PDFLoader(file_name)
-    const pages = await loader.load()
-    console.log(
-      'Loaded pages:',
-      pages.map((page) => ({
-        pageContent: page.pageContent,
-        metadata: page.metadata,
-      }))
-    )
+    const pages = (await loader.load()) as PDFPage[]
+
+    // 2. split the pdf into chunks -> chunk the pdf into smaller pieces
+
+    const chunkedDocs = await Promise.all(pages.map(prepareDocuments))
+
+    // 3. vectorize and embed the chunks -> vectorize the chunks and store them in pinecone
+
     return pages
   } catch (error) {
     console.error('Error loading PDF:', error)
     throw error
   }
+}
+
+export const truncateStringByBytes = (str: string, maxBytes: number) => {
+  const encoder = new TextEncoder()
+  return new TextDecoder('utf-8').decode(encoder.encode(str).slice(0, maxBytes))
+}
+
+async function prepareDocuments(page: PDFPage) {
+  let { pageContent, metadata } = page
+  pageContent = pageContent.replace(/\n/g, ' ').replace(/\s+/g, ' ')
+  const textSplitter = new RecursiveCharacterTextSplitter()
+  const docs = await textSplitter.splitDocuments([
+    new Document({
+      pageContent,
+      metadata: {
+        pageNumber: metadata.loc.pageNumber,
+        text: truncateStringByBytes(pageContent, 30000),
+      },
+    }),
+  ])
+
+  return docs
 }

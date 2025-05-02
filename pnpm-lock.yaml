@@ -23,6 +23,9 @@ importers:
       '@neondatabase/serverless':
         specifier: ^1.0.0
         version: 1.0.0
+      '@pinecone-database/doc-splitter':
+        specifier: ^0.0.1
+        version: 0.0.1
       '@pinecone-database/pinecone':
         specifier: ^5.1.1
         version: 5.1.1
@@ -1274,6 +1277,10 @@ packages:
 
   '@petamoriken/float16@3.9.2':
     resolution: {integrity: sha512-VgffxawQde93xKxT3qap3OH+meZf7VaSB5Sqd4Rqc+FP5alWbpOyan/7tRbOAvynjpG3GpdtAuGU/NdhQpmrog==}
+
+  '@pinecone-database/doc-splitter@0.0.1':
+    resolution: {integrity: sha512-UCJgNZKnXPcrTblI9ui6H+HbQbyYf8bsGQAGR3f4IYW2Lw1zQ0izFrjGsCgqiP+GE837JXv43+qgkSqwWlnZtA==}
+    engines: {node: '>=14.0.0'}
 
   '@pinecone-database/pinecone@5.1.1':
     resolution: {integrity: sha512-2JwnY28qb2AQi3fLlBfiXhV6e4ZEF0/0HNLdoFWoSPcty6Eu7+354M8mo/Hj0Hi7y3TCDkSCXq2dgmbcDSmCFQ==}
@@ -4723,6 +4730,8 @@ snapshots:
   '@nolyfill/is-core-module@1.0.39': {}
 
   '@petamoriken/float16@3.9.2': {}
+
+  '@pinecone-database/doc-splitter@0.0.1': {}
 
   '@pinecone-database/pinecone@5.1.1': {}
 

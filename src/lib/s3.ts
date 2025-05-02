@@ -15,17 +15,16 @@ export async function uploadToS3(
     const file_key =
       'uploads/' + Date.now().toString() + file.name.replace(' ', '-')
 
-    // Convert the File object to a Blob
-    const fileBuffer = await file.arrayBuffer()
+    // Convert File to Uint8Array (works with S3 SDK)
+    const fileBuffer = new Uint8Array(await file.arrayBuffer())
 
     const params = {
       Bucket: process.env.NEXT_PUBLIC_S3_BUCKET_NAME!,
       Key: file_key,
-      Body: fileBuffer, // Pass the ArrayBuffer here
-      ContentType: file.type, // Set the content type
+      Body: fileBuffer,
+      ContentType: file.type,
     }
 
-    // Use PutObjectCommand with the send method
     await s3.send(new PutObjectCommand(params))
 
     return {

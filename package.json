@@ -14,6 +14,7 @@
     "@langchain/community": "^0.3.40",
     "@langchain/core": "^0.3.44",
     "@neondatabase/serverless": "^1.0.0",
+    "@pinecone-database/doc-splitter": "^0.0.1",
     "@pinecone-database/pinecone": "^5.1.1",
     "@radix-ui/react-slot": "^1.2.0",
     "@tanstack/react-query": "^5.74.3",
